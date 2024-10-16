@@ -70,7 +70,11 @@ pub fn Matrix(comptime _m: comptime_int, comptime _n: comptime_int, comptime num
             const B = ZeroCoords(numtype, s, &v2);
             const C = ZeroCoords(numtype, s, &v3);
             multiply(numtype, s, s, A, B, C);
-            const m3 = Matrix(m, l, numtype).initwith(v3);
+            var V3 = .{.{0} ** n} ** m;
+            inline for (0..m) |x| {
+                @memcpy(V3[x][0..n], v3[x][0..n]);
+            }
+            const m3 = Matrix(m, l, numtype).initwith(V3);
             return m3;
         }
         pub fn addScalar(m1: @This(), v2: numtype) @This() {
@@ -112,7 +116,7 @@ const AddSubtract = enum {
 };
 const Add = AddSubtract.Add;
 const Subtract = AddSubtract.Subtract;
-inline fn ZeroCoords(comptime numtype: type, comptime n: comptime_int, ptr: *[n][n]numtype) Coordinates(numtype, n) {
+fn ZeroCoords(comptime numtype: type, comptime n: comptime_int, ptr: *[n][n]numtype) Coordinates(numtype, n) {
     return Coordinates(numtype, n){
         .x = 0b0,
         .y = 0b0,
@@ -204,9 +208,9 @@ fn multiply(
 
         // intermediary step that gets switched out as i need it
         var m = .{.{0b0} ** mid} ** mid;
-        const M = ZeroCoords(numtype, n, &m);
+        const M = ZeroCoords(numtype, mid, &m);
         var p = .{.{0b0} ** mid} ** mid;
-        const P = ZeroCoords(numtype, n, &p);
+        const P = ZeroCoords(numtype, mid, &p);
 
         // M1 = (A11 + A22) * (B11 + B22)
         // M2 = (A21 + A22) * B11
